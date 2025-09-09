@@ -3,30 +3,40 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>OSD Driver Sign-Off</title>
+<title>OSD – Driver Sign-Off</title>
+
+<!-- ===== Styles ===== -->
 <style>
   :root{--ink:#0f172a;--muted:#64748b;--line:#e5e7eb;--brand:#4f46e5}
+  *{box-sizing:border-box}
   body{font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:#f6f7fb;color:var(--ink);margin:0}
   .container{max-width:960px;margin:24px auto;padding:0 16px}
   .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);padding:16px;margin-bottom:16px}
   h1{font-size:28px;margin:8px 0 16px}
   label{display:block;font-size:13px;color:#475569;margin:8px 0 6px}
-  input,textarea,select{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;outline:none}
+  input,textarea,select{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;outline:none;background:#fff}
   input:focus,textarea:focus,select:focus{border-color:var(--brand)}
   .grid{display:grid;gap:12px}
   @media(min-width:820px){.grid-2{grid-template-columns:1fr 1fr}}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .btn{background:var(--brand);color:#fff;border:none;border-radius:12px;padding:10px 16px;font-weight:600;cursor:pointer}
   .btn:disabled{opacity:.6;cursor:not-allowed}
-  .btn-ghost{background:#eef2ff;color:#111827}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn-ghost{background:#eef2ff;color:#111827;border:none;border-radius:10px;padding:8px 12px}
   .muted{color:var(--muted);font-size:12px}
+
+  /* Alerts */
+  .alert { padding:10px 14px; border-radius:12px; margin:10px 0; font-weight:600 }
+  .alert.success { background:#e8f7ee; border:1px solid #31a24c; color:#166534 }
+  .alert.error   { background:#fdeaea; border:1px solid #dc2626; color:#7f1d1d }
+
+  /* Signature */
   .sig{border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .sigbar{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px 10px}
-  canvas{display:block;width:100%;height:180px}
-  .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+  #sigCanvas{display:block;width:100%;height:180px;background:#f9fafb;touch-action:none}
+
+  /* Thumbs */
+  .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:8px}
   .thumbs img{width:100%;height:100px;object-fit:cover;border:1px solid var(--line);border-radius:8px}
-  .success{background:#ecfdf5;border:1px solid #10b98133;color:#065f46;padding:10px 12px;border-radius:12px}
-  .error{background:#fef2f2;border:1px solid #ef444433;color:#7f1d1d;padding:10px 12px;border-radius:12px}
 </style>
 </head>
 <body>
@@ -34,76 +44,71 @@
   <h1>OSD – Driver Sign-Off</h1>
 
   <div id="alert"></div>
-  <style>
-  .alert { padding: 10px 14px; border-radius: 8px; margin: 10px 0; font-weight: 600; }
-  .alert.success { background:#e8f7ee; border:1px solid #31a24c; color:#166534; }
-  .alert.error   { background:#fdeaea; border:1px solid #dc2626; color:#7f1d1d; }
-</style>
 
-
-  <form id="osdForm" class="card">
+  <form id="osdForm" class="card" novalidate>
     <div class="grid grid-2">
       <div>
         <label>Date/Time</label>
-        <input type="datetime-local" name="date" id="date"/>
+        <input type="datetime-local" id="date"/>
       </div>
       <div>
         <label>Location *</label>
-        <select name="location" id="location" required>
+        <select id="location" required>
           <option value="">Select Dock</option>
           <option value="Dock 17 – 6121 Bixby Rd, Canal Winchester OH 43110">Dock 17 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
           <option value="Dock 18 – 6121 Bixby Rd, Canal Winchester OH 43110">Dock 18 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
           <option value="Dock 19 – 6121 Bixby Rd, Canal Winchester OH 43110">Dock 19 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
         </select>
       </div>
+
       <div>
         <label>Load ID / BOL #</label>
-        <input name="bol" id="bol"/>
+        <input id="bol"/>
       </div>
       <div>
         <label>PO Number</label>
-        <input name="po" id="po"/>
+        <input id="po"/>
       </div>
       <div>
         <label>Trailer #</label>
-        <input name="trailer" id="trailer"/>
+        <input id="trailer"/>
       </div>
       <div>
         <label>Stop #</label>
-        <input name="stop" id="stop"/>
+        <input id="stop"/>
       </div>
       <div>
         <label>Carrier</label>
-        <input name="carrier" id="carrier"/>
+        <input id="carrier"/>
       </div>
       <div>
         <label>Vendor ID</label>
-        <input name="vendorId" id="vendorId"/>
+        <input id="vendorId"/>
       </div>
       <div>
         <label>Vendor Name</label>
-        <input name="vendorName" id="vendorName"/>
+        <input id="vendorName"/>
       </div>
     </div>
 
     <label>Notes / Exceptions</label>
-    <textarea name="notes" id="notes" rows="5" placeholder="Possible damages, shortages, and overages..."></textarea>
+    <textarea id="notes" rows="5" placeholder="Possible damages, shortages, and overages..."></textarea>
 
     <div class="row">
-  <div style="flex:1">
-    <label>Driver Name *</label>
-    <input name="driverName" id="driverName" required/>
-  </div>
-  <div style="flex:1">
-    <label>PRO #</label>
-    <input name="proNumber" id="proNumber"/>
-  </div>
-</div>
+      <div style="flex:1">
+        <label>Driver Name *</label>
+        <input id="driverName" required/>
+      </div>
+      <div style="flex:1">
+        <label>PRO #</label>
+        <input id="proNumber"/>
+      </div>
+    </div>
 
     <div class="sig" style="margin-top:12px">
       <div class="sigbar">
         <span class="muted">Driver signature (draw in the box)</span>
-        <button type="button" class="btn btn-ghost" id="clearSig">Clear</button>
+        <button type="button" class="btn-ghost" id="clearSig">Clear</button>
       </div>
       <canvas id="sigCanvas"></canvas>
     </div>
@@ -119,163 +124,156 @@
     </div>
   </form>
 
-  <p class="muted">Set your backend URL inside the script to enable PDF emailing.</p>
+  <p class="muted">Connected to backend for PDF + email.</p>
 </div>
 
+<!-- ===== Script ===== -->
 <script>
-  // ======== CONFIG ========
-  const BACKEND_URL = 'https://YOUR-RENDER-URL.onrender.com'; // <-- change after backend deploy
-  // ========================
+  // ---------- Config ----------
+  const BACKEND_URL = "https://osd-webform.onrender.com/api/signoff";
 
   // Prefill local datetime
-  (function(){
-    const d = new Date();
-    const p = n => String(n).padStart(2,'0');
+  (function prefillDate(){
+    const d = new Date(), p = n => String(n).padStart(2,'0');
     const val = `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
     document.getElementById('date').value = val;
   })();
 
-  // Signature pad
+  const alertBox   = document.getElementById('alert');
+  const form       = document.getElementById('osdForm');
+  const submitBtn  = document.getElementById('submitBtn');
+
+  // ---------- Signature Pad ----------
   const canvas = document.getElementById('sigCanvas');
-  const ctx = canvas.getContext('2d');
-  let drawing = false, last=[0,0], signatureDataUrl = '';
-  function resize(){
-    const ratio = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth || canvas.parentElement.clientWidth; const h = 180;
-    canvas.width = Math.floor(w * ratio); canvas.height = Math.floor(h * ratio);
-    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  const ctx    = canvas.getContext('2d');
+  let drawing=false, lastX=0, lastY=0;
+  window.signatureDataUrl = "";
+
+  function resizeCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width  = Math.floor(rect.width * ratio);
+    canvas.height = Math.floor(rect.height * ratio);
+    ctx.setTransform(ratio,0,0,ratio,0,0);
     ctx.lineWidth = 2.5; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111827';
   }
-  new ResizeObserver(resize).observe(canvas); resize();
-  const pos = e => { const r=canvas.getBoundingClientRect(); const t=e.touches?.[0]; const x=(t?t.clientX:e.clientX)-r.left; const y=(t?t.clientY:e.clientY)-r.top; return [x,y]; };
-  const down = e => { e.preventDefault(); drawing=true; last=pos(e)};
-  const move = e => { if(!drawing) return; const p=pos(e); ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last=p };
-  const up = () => { drawing=false; signatureDataUrl = canvas.toDataURL('image/png'); };
-  canvas.addEventListener('mousedown',down); canvas.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
-  canvas.addEventListener('touchstart',down,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false}); window.addEventListener('touchend',up);
-  document.getElementById('clearSig').onclick = () => { ctx.clearRect(0,0,canvas.width,canvas.height); signatureDataUrl = '' };
+  // initial + responsive sizing
+  resizeCanvas();
+  new ResizeObserver(resizeCanvas).observe(canvas);
 
-  // Photo previews + compression
+  function point(e){
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: (t.clientX - r.left), y: (t.clientY - r.top) };
+  }
+  canvas.addEventListener('pointerdown', e => { e.preventDefault(); drawing=true; const p=point(e); lastX=p.x; lastY=p.y; });
+  canvas.addEventListener('pointermove', e => {
+    if(!drawing) return;
+    const p = point(e);
+    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
+    lastX=p.x; lastY=p.y;
+  });
+  function endStroke(){ if(!drawing) return; drawing=false; window.signatureDataUrl = canvas.toDataURL('image/png'); }
+  canvas.addEventListener('pointerup', endStroke);
+  canvas.addEventListener('pointerleave', endStroke);
+  canvas.addEventListener('pointercancel', endStroke);
+  document.getElementById('clearSig').addEventListener('click', () => {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    window.signatureDataUrl = "";
+  });
+
+  // ---------- Photo previews ----------
   const photosInput = document.getElementById('photos');
-  const thumbs = document.getElementById('thumbs');
+  const thumbs      = document.getElementById('thumbs');
   photosInput.addEventListener('change', () => {
-    thumbs.innerHTML='';
+    thumbs.innerHTML = '';
     [...photosInput.files].forEach(file => {
       const url = URL.createObjectURL(file);
-      const img = document.createElement('img'); img.src = url; img.onload = () => URL.revokeObjectURL(url);
+      const img = document.createElement('img');
+      img.src = url; img.onload = () => URL.revokeObjectURL(url);
       thumbs.appendChild(img);
     });
   });
 
-  function readImageAsDataURL(file, maxW=1600, maxH=1600, quality=0.85){
+  // file -> dataURL (with simple compression)
+  function fileToDataURL(file, maxW=1600, maxH=1600, quality=0.85){
     return new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = () => {
+      const fr = new FileReader();
+      fr.onload = () => {
         const img = new Image();
         img.onload = () => {
-          const ratio = Math.min(1, maxW/img.width, maxH/img.height);
+          const scale = Math.min(1, maxW/img.width, maxH/img.height);
           const c = document.createElement('canvas');
-          c.width = Math.round(img.width*ratio);
-          c.height = Math.round(img.height*ratio);
-          const cx = c.getContext('2d');
-          cx.drawImage(img,0,0,c.width,c.height);
+          c.width = Math.round(img.width*scale);
+          c.height = Math.round(img.height*scale);
+          c.getContext('2d').drawImage(img,0,0,c.width,c.height);
           resolve(c.toDataURL('image/jpeg', quality));
         };
-        img.src = reader.result;
+        img.src = fr.result;
       };
-      reader.readAsDataURL(file);
+      fr.readAsDataURL(file);
     });
   }
 
-  // Submit handler -> POST JSON to backend
-  document.getElementById('osdForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-  <script>
-  // ✅ Backend endpoint
-  const BACKEND_URL = "https://osd-webform.onrender.com/api/signoff";
-
-  const alertBox = document.getElementById('alert');
-  const form = document.getElementById('osdForm');
-  const submitBtn = document.getElementById('submitBtn');
-
-  // helper: file -> dataURL
-  function readImageAsDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-
+  // ---------- Submit ----------
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     alertBox.innerHTML = '';
 
-    const location = document.getElementById('location').value.trim();
+    const location   = document.getElementById('location').value.trim();
     const driverName = document.getElementById('driverName').value.trim();
-    if (!location || !driverName) {
-      alertBox.innerHTML = `<div class="error">Location and Driver Name are required.</div>`;
+    if(!location || !driverName){
+      alertBox.innerHTML = `<div class="alert error">Location and Driver Name are required.</div>`;
       return;
     }
 
-    // collect optional photos
-    const photosInput = document.getElementById('photos'); // ensure your input has id="photos"
-    const files = photosInput ? [...photosInput.files] : [];
+    // collect photos (optional)
+    const files  = photosInput ? [...photosInput.files] : [];
     const photos = [];
-    for (const f of files) {
-      photos.push({ name: f.name, dataUrl: await readImageAsDataURL(f) });
-    }
+    for(const f of files){ photos.push({ name:f.name, dataUrl: await fileToDataURL(f) }); }
 
-    // signature canvas support (assumes you’ve set signatureDataUrl elsewhere)
-    const signature = window.signatureDataUrl || '';
-
-    // build payload (mapped to backend keys; extra fields are fine)
     const payload = {
-      timestamp: document.getElementById('date')?.value || new Date().toISOString(),
+      timestamp: document.getElementById('date').value || new Date().toISOString(),
       location,
-      loadId: document.getElementById('bol')?.value || '',
-      poNumber: document.getElementById('po')?.value || '',
-      trailerNumber: document.getElementById('trailer')?.value || '',
-      stopNumber: document.getElementById('stop')?.value || '',
-      carrier: document.getElementById('carrier')?.value || '',
-      vendorId: document.getElementById('vendorId')?.value || '',
-      vendorName: document.getElementById('vendorName')?.value || '',
-      notes: document.getElementById('notes')?.value || '',
+      loadId: document.getElementById('bol').value || '',
+      poNumber: document.getElementById('po').value || '',
+      trailerNumber: document.getElementById('trailer').value || '',
+      stopNumber: document.getElementById('stop').value || '',
+      carrier: document.getElementById('carrier').value || '',
+      vendorId: document.getElementById('vendorId').value || '',
+      vendorName: document.getElementById('vendorName').value || '',
+      notes: document.getElementById('notes').value || '',
       driverName,
-      driverId: document.getElementById('driverId')?.value || '',
-      driverInitials: document.getElementById('driverInitials')?.value || '',
-      signatureDataUrl: signature,
-      photos,                                // optional; backend can ignore if not used
+      proNumber: document.getElementById('proNumber').value || '',
+      signatureDataUrl: window.signatureDataUrl || '',
+      photos,
       device: navigator.userAgent,
-      submittedAt: new Date().toISOString(),
-      toEmail: document.getElementById('toEmail')?.value || '' // optional override
+      submittedAt: new Date().toISOString()
     };
 
     submitBtn.disabled = true;
 
-    try {
+    try{
       const resp = await fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload)
       });
-      const out = await resp.json().catch(() => ({}));
-      if (!resp.ok || out.ok === false) throw new Error(out.error || 'Submit failed');
+      const out = await resp.json().catch(()=> ({}));
+      if(!resp.ok || out.ok === false) throw new Error(out.error || 'Submit failed');
 
-      alertBox.innerHTML = `<div class="success">✅ Submitted! PDF emailed${out.id ? ' · Ref: ' + out.id : ''}.</div>`;
+      alertBox.innerHTML = `<div class="alert success">✅ Submitted! PDF emailed${out.id ? ' · Ref: ' + out.id : ''}.</div>`;
       form.reset();
-      // clear signature + thumbnails if present
-      if (window.ctx && window.canvas) { window.ctx.clearRect(0,0,canvas.width,canvas.height); }
+      ctx.clearRect(0,0,canvas.width,canvas.height);
       window.signatureDataUrl = '';
-      const thumbs = document.getElementById('thumbs');
-      if (thumbs) thumbs.innerHTML = '';
-    } catch (err) {
+      if(thumbs) thumbs.innerHTML = '';
+    }catch(err){
       console.error(err);
-      alertBox.innerHTML = `<div class="error">❌ ${err.message}</div>`;
-    } finally {
+      alertBox.innerHTML = `<div class="alert error">❌ ${err.message}</div>`;
+    }finally{
       submitBtn.disabled = false;
     }
   });
 </script>
+</body>
+</html>
