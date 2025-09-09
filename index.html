@@ -185,6 +185,8 @@
   // Submit handler -> POST JSON to backend
   document.getElementById('osdForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const BACKEND_URL = "https://osd-webform.onrender.com/api/signoff";
+    
     const alertBox = document.getElementById('alert');
     alertBox.innerHTML='';
 
