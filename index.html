@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>OSD – Driver Sign-Off</title>
 
-<!-- ===== Styles ===== -->
 <style>
   :root{--ink:#0f172a;--muted:#64748b;--line:#e5e7eb;--brand:#4f46e5}
   *{box-sizing:border-box}
@@ -23,18 +22,12 @@
   .btn:disabled{opacity:.6;cursor:not-allowed}
   .btn-ghost{background:#eef2ff;color:#111827;border:none;border-radius:10px;padding:8px 12px}
   .muted{color:var(--muted);font-size:12px}
-
-  /* Alerts */
-  .alert { padding:10px 14px; border-radius:12px; margin:10px 0; font-weight:600 }
-  .alert.success { background:#e8f7ee; border:1px solid #31a24c; color:#166534 }
-  .alert.error   { background:#fdeaea; border:1px solid #dc2626; color:#7f1d1d }
-
-  /* Signature */
+  .alert{padding:10px 14px;border-radius:12px;margin:10px 0;font-weight:600}
+  .alert.success{background:#e8f7ee;border:1px solid #31a24c;color:#166534}
+  .alert.error{background:#fdeaea;border:1px solid #dc2626;color:#7f1d1d}
   .sig{border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .sigbar{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px 10px}
   #sigCanvas{display:block;width:100%;height:180px;background:#f9fafb;touch-action:none}
-
-  /* Thumbs */
   .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:8px}
   .thumbs img{width:100%;height:100px;object-fit:cover;border:1px solid var(--line);border-radius:8px}
 </style>
@@ -60,35 +53,13 @@
           <option value="Dock 19 – 6121 Bixby Rd, Canal Winchester OH 43110">Dock 19 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
         </select>
       </div>
-
-      <div>
-        <label>Load ID / BOL #</label>
-        <input id="bol"/>
-      </div>
-      <div>
-        <label>PO Number</label>
-        <input id="po"/>
-      </div>
-      <div>
-        <label>Trailer #</label>
-        <input id="trailer"/>
-      </div>
-      <div>
-        <label>Stop #</label>
-        <input id="stop"/>
-      </div>
-      <div>
-        <label>Carrier</label>
-        <input id="carrier"/>
-      </div>
-      <div>
-        <label>Vendor ID</label>
-        <input id="vendorId"/>
-      </div>
-      <div>
-        <label>Vendor Name</label>
-        <input id="vendorName"/>
-      </div>
+      <div><label>Load ID / BOL #</label><input id="bol"/></div>
+      <div><label>PO Number</label><input id="po"/></div>
+      <div><label>Trailer #</label><input id="trailer"/></div>
+      <div><label>Stop #</label><input id="stop"/></div>
+      <div><label>Carrier</label><input id="carrier"/></div>
+      <div><label>Vendor ID</label><input id="vendorId"/></div>
+      <div><label>Vendor Name</label><input id="vendorName"/></div>
     </div>
 
     <label>Notes / Exceptions</label>
@@ -119,17 +90,39 @@
       <div class="thumbs" id="thumbs"></div>
     </div>
 
+    <!-- Email controls -->
+    <div class="grid grid-2 card" style="margin-top:12px">
+      <div>
+        <label>Email To (comma-separated)</label>
+        <input id="toEmail" placeholder="ops@company.com, manager@company.com"/>
+      </div>
+      <div>
+        <label>CC (optional)</label>
+        <input id="ccEmail" placeholder="qc@company.com"/>
+      </div>
+      <div>
+        <label>BCC (optional)</label>
+        <input id="bccEmail" placeholder="audit@company.com"/>
+      </div>
+      <div>
+        <label>Subject (optional)</label>
+        <input id="emailSubject" placeholder="OSD Sign-Off"/>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Email Message (optional)</label>
+      <textarea id="emailMessage" rows="4" placeholder="Any extra context to include in the email body..."></textarea>
+    </div>
+
     <div class="row" style="justify-content:flex-end;margin-top:12px">
       <button class="btn" id="submitBtn">Submit (Generate & Email PDF)</button>
     </div>
   </form>
-
-  <p class="muted">Connected to backend for PDF + email.</p>
 </div>
 
-<!-- ===== Script ===== -->
 <script>
-  // ---------- Config ----------
+  // ---- Config ----
   const BACKEND_URL = "https://osd-webform.onrender.com/api/signoff";
 
   // Prefill local datetime
@@ -139,11 +132,11 @@
     document.getElementById('date').value = val;
   })();
 
-  const alertBox   = document.getElementById('alert');
-  const form       = document.getElementById('osdForm');
-  const submitBtn  = document.getElementById('submitBtn');
+  const alertBox  = document.getElementById('alert');
+  const form      = document.getElementById('osdForm');
+  const submitBtn = document.getElementById('submitBtn');
 
-  // ---------- Signature Pad ----------
+  // ---- Signature pad (pointer events) ----
   const canvas = document.getElementById('sigCanvas');
   const ctx    = canvas.getContext('2d');
   let drawing=false, lastX=0, lastY=0;
@@ -155,79 +148,49 @@
     canvas.width  = Math.floor(rect.width * ratio);
     canvas.height = Math.floor(rect.height * ratio);
     ctx.setTransform(ratio,0,0,ratio,0,0);
-    ctx.lineWidth = 2.5; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111827';
+    ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#111827';
   }
-  // initial + responsive sizing
-  resizeCanvas();
-  new ResizeObserver(resizeCanvas).observe(canvas);
+  resizeCanvas(); new ResizeObserver(resizeCanvas).observe(canvas);
 
-  function point(e){
-    const r = canvas.getBoundingClientRect();
-    const t = e.touches ? e.touches[0] : e;
-    return { x: (t.clientX - r.left), y: (t.clientY - r.top) };
-  }
-  canvas.addEventListener('pointerdown', e => { e.preventDefault(); drawing=true; const p=point(e); lastX=p.x; lastY=p.y; });
-  canvas.addEventListener('pointermove', e => {
-    if(!drawing) return;
-    const p = point(e);
-    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
-    lastX=p.x; lastY=p.y;
-  });
+  function pt(e){ const r=canvas.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return {x:t.clientX-r.left,y:t.clientY-r.top}; }
+  canvas.addEventListener('pointerdown', e=>{ e.preventDefault(); drawing=true; const p=pt(e); lastX=p.x; lastY=p.y; });
+  canvas.addEventListener('pointermove', e=>{ if(!drawing) return; const p=pt(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; });
   function endStroke(){ if(!drawing) return; drawing=false; window.signatureDataUrl = canvas.toDataURL('image/png'); }
   canvas.addEventListener('pointerup', endStroke);
   canvas.addEventListener('pointerleave', endStroke);
   canvas.addEventListener('pointercancel', endStroke);
-  document.getElementById('clearSig').addEventListener('click', () => {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    window.signatureDataUrl = "";
-  });
+  document.getElementById('clearSig').addEventListener('click', ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); window.signatureDataUrl=""; });
 
-  // ---------- Photo previews ----------
+  // ---- Photo previews + light compression ----
   const photosInput = document.getElementById('photos');
   const thumbs      = document.getElementById('thumbs');
-  photosInput.addEventListener('change', () => {
-    thumbs.innerHTML = '';
-    [...photosInput.files].forEach(file => {
-      const url = URL.createObjectURL(file);
-      const img = document.createElement('img');
-      img.src = url; img.onload = () => URL.revokeObjectURL(url);
-      thumbs.appendChild(img);
+  photosInput.addEventListener('change', ()=>{
+    thumbs.innerHTML=''; [...photosInput.files].forEach(file=>{
+      const url = URL.createObjectURL(file); const img = document.createElement('img');
+      img.src = url; img.onload=()=>URL.revokeObjectURL(url); thumbs.appendChild(img);
     });
   });
 
-  // file -> dataURL (with simple compression)
   function fileToDataURL(file, maxW=1600, maxH=1600, quality=0.85){
-    return new Promise(resolve => {
-      const fr = new FileReader();
-      fr.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const scale = Math.min(1, maxW/img.width, maxH/img.height);
-          const c = document.createElement('canvas');
-          c.width = Math.round(img.width*scale);
-          c.height = Math.round(img.height*scale);
-          c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-          resolve(c.toDataURL('image/jpeg', quality));
-        };
-        img.src = fr.result;
-      };
-      fr.readAsDataURL(file);
+    return new Promise(resolve=>{
+      const fr=new FileReader();
+      fr.onload=()=>{ const img=new Image(); img.onload=()=>{
+        const s=Math.min(1,maxW/img.width,maxH/img.height);
+        const c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        resolve(c.toDataURL('image/jpeg', quality));
+      }; img.src=fr.result; }; fr.readAsDataURL(file);
     });
   }
 
-  // ---------- Submit ----------
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    alertBox.innerHTML = '';
+  // ---- Submit ----
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault(); alertBox.innerHTML='';
 
     const location   = document.getElementById('location').value.trim();
     const driverName = document.getElementById('driverName').value.trim();
-    if(!location || !driverName){
-      alertBox.innerHTML = `<div class="alert error">Location and Driver Name are required.</div>`;
-      return;
-    }
+    if(!location || !driverName){ alertBox.innerHTML = `<div class="alert error">Location and Driver Name are required.</div>`; return; }
 
-    // collect photos (optional)
     const files  = photosInput ? [...photosInput.files] : [];
     const photos = [];
     for(const f of files){ photos.push({ name:f.name, dataUrl: await fileToDataURL(f) }); }
@@ -248,32 +211,27 @@
       signatureDataUrl: window.signatureDataUrl || '',
       photos,
       device: navigator.userAgent,
-      submittedAt: new Date().toISOString()
+      submittedAt: new Date().toISOString(),
+      // email controls
+      toEmail:  document.getElementById('toEmail').value || '',
+      ccEmail:  document.getElementById('ccEmail').value || '',
+      bccEmail: document.getElementById('bccEmail').value || '',
+      subject:  document.getElementById('emailSubject').value || '',
+      message:  document.getElementById('emailMessage').value || ''
     };
 
     submitBtn.disabled = true;
-
     try{
-      const resp = await fetch(BACKEND_URL, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
+      const resp = await fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       const out = await resp.json().catch(()=> ({}));
       if(!resp.ok || out.ok === false) throw new Error(out.error || 'Submit failed');
-
       alertBox.innerHTML = `<div class="alert success">✅ Submitted! PDF emailed${out.id ? ' · Ref: ' + out.id : ''}.</div>`;
-      form.reset();
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      window.signatureDataUrl = '';
-      if(thumbs) thumbs.innerHTML = '';
+      form.reset(); ctx.clearRect(0,0,canvas.width,canvas.height); window.signatureDataUrl=''; thumbs.innerHTML='';
     }catch(err){
-      console.error(err);
-      alertBox.innerHTML = `<div class="alert error">❌ ${err.message}</div>`;
-    }finally{
-      submitBtn.disabled = false;
-    }
+      console.error(err); alertBox.innerHTML = `<div class="alert error">❌ ${err.message}</div>`;
+    }finally{ submitBtn.disabled = false; }
   });
 </script>
 </body>
 </html>
+
