@@ -185,61 +185,91 @@
   // Submit handler -> POST JSON to backend
   document.getElementById('osdForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const BACKEND_URL = "https://osd-webform.onrender.com/api/signoff";
-    
-    const alertBox = document.getElementById('alert');
-    alertBox.innerHTML='';
+  <script>
+  // ✅ Backend endpoint
+  const BACKEND_URL = "https://osd-webform.onrender.com/api/signoff";
 
-    if(!BACKEND_URL || BACKEND_URL.includes('YOUR-RENDER-URL')){
-      alertBox.innerHTML = `<div class="error">Set BACKEND_URL inside the script after you deploy the backend.</div>`; return;
-    }
+  const alertBox = document.getElementById('alert');
+  const form = document.getElementById('osdForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  // helper: file -> dataURL
+  function readImageAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.innerHTML = '';
 
     const location = document.getElementById('location').value.trim();
     const driverName = document.getElementById('driverName').value.trim();
-    if(!location || !driverName){ alertBox.innerHTML = `<div class="error">Location and Driver Name are required.</div>`; return; }
+    if (!location || !driverName) {
+      alertBox.innerHTML = `<div class="error">Location and Driver Name are required.</div>`;
+      return;
+    }
 
-    document.getElementById('submitBtn').disabled = true;
-
-    // convert selected photos
-    const files = [...photosInput.files];
+    // collect optional photos
+    const photosInput = document.getElementById('photos'); // ensure your input has id="photos"
+    const files = photosInput ? [...photosInput.files] : [];
     const photos = [];
-    for(const f of files){ photos.push({ name: f.name, dataUrl: await readImageAsDataURL(f) }); }
+    for (const f of files) {
+      photos.push({ name: f.name, dataUrl: await readImageAsDataURL(f) });
+    }
 
+    // signature canvas support (assumes you’ve set signatureDataUrl elsewhere)
+    const signature = window.signatureDataUrl || '';
+
+    // build payload (mapped to backend keys; extra fields are fine)
     const payload = {
-      date: document.getElementById('date').value,
+      timestamp: document.getElementById('date')?.value || new Date().toISOString(),
       location,
-      bol: document.getElementById('bol').value,
-      po: document.getElementById('po').value,
-      trailer: document.getElementById('trailer').value,
-      stop: document.getElementById('stop').value,
-      carrier: document.getElementById('carrier').value,
-      vendorId: document.getElementById('vendorId').value,
-      vendorName: document.getElementById('vendorName').value,
-      notes: document.getElementById('notes').value,
-      driverName, driverId: document.getElementById('driverId').value,
-      signatureDataUrl,
-      photos,
+      loadId: document.getElementById('bol')?.value || '',
+      poNumber: document.getElementById('po')?.value || '',
+      trailerNumber: document.getElementById('trailer')?.value || '',
+      stopNumber: document.getElementById('stop')?.value || '',
+      carrier: document.getElementById('carrier')?.value || '',
+      vendorId: document.getElementById('vendorId')?.value || '',
+      vendorName: document.getElementById('vendorName')?.value || '',
+      notes: document.getElementById('notes')?.value || '',
+      driverName,
+      driverId: document.getElementById('driverId')?.value || '',
+      driverInitials: document.getElementById('driverInitials')?.value || '',
+      signatureDataUrl: signature,
+      photos,                                // optional; backend can ignore if not used
       device: navigator.userAgent,
-      submittedAt: new Date().toISOString()
+      submittedAt: new Date().toISOString(),
+      toEmail: document.getElementById('toEmail')?.value || '' // optional override
     };
 
-    try{
-      const resp = await fetch(BACKEND_URL + '/api/osd/submit', {
+    submitBtn.disabled = true;
+
+    try {
+      const resp = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const out = await resp.json().catch(()=>({}));
-      if(!resp.ok) throw new Error(out.error || 'Submit failed');
-      alertBox.innerHTML = `<div class="success">Submitted! PDF emailed and stored. Ref: ${out.ref || ''}</div>`;
-      document.getElementById('osdForm').reset();
-      ctx.clearRect(0,0,canvas.width,canvas.height); signatureDataUrl=''; thumbs.innerHTML='';
-    }catch(err){
-      alertBox.innerHTML = `<div class="error">${err.message}</div>`;
-    }finally{
-      document.getElementById('submitBtn').disabled = false;
+      const out = await resp.json().catch(() => ({}));
+      if (!resp.ok || out.ok === false) throw new Error(out.error || 'Submit failed');
+
+      alertBox.innerHTML = `<div class="success">✅ Submitted! PDF emailed${out.id ? ' · Ref: ' + out.id : ''}.</div>`;
+      form.reset();
+      // clear signature + thumbnails if present
+      if (window.ctx && window.canvas) { window.ctx.clearRect(0,0,canvas.width,canvas.height); }
+      window.signatureDataUrl = '';
+      const thumbs = document.getElementById('thumbs');
+      if (thumbs) thumbs.innerHTML = '';
+    } catch (err) {
+      console.error(err);
+      alertBox.innerHTML = `<div class="error">❌ ${err.message}</div>`;
+    } finally {
+      submitBtn.disabled = false;
     }
   });
 </script>
-</body>
-</html>
