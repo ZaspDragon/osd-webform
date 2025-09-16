@@ -47,12 +47,12 @@
         <input type="datetime-local" id="date"/>
       </div>
       <div>
-        <label>Location *</label>
-        <select id="location" required>
-          <option value="">Select Dock</option>
-          <option value="Dock 17 – 6121 Bixby Rd, Canal Winchester OH 43110">Dock 17 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
-          <option value="Dock 18 – 6121 Bixby Rd, Canal Winchester OH 43110">Dock 18 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
-          <option value="Dock 19 – 6121 Bixby Rd, Canal Winchester OH 43110">Dock 19 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
+        <label>Door Number *</label>
+        <select id="doorNumber" required>
+          <option value="">Select Door</option>
+          <option value="Door 17 – 6121 Bixby Rd, Canal Winchester OH 43110">Door 17 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
+          <option value="Door 18 – 6121 Bixby Rd, Canal Winchester OH 43110">Door 18 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
+          <option value="Door 19 – 6121 Bixby Rd, Canal Winchester OH 43110">Door 19 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
         </select>
       </div>
     </div>
@@ -75,7 +75,6 @@
         <label for="carrier">Carrier</label>
         <input id="carrier" placeholder="Carrier"/>
       </div>
-      <!-- Stop # removed per request -->
     </div>
 
     <!-- Compact row: Vendor ID + Vendor Name -->
@@ -152,10 +151,9 @@
 </div>
 
 <script>
-  // ---- Config ----
   const BACKEND_URL = "https://osd-webform.onrender.com/api/signoff";
 
-  // Prefill local datetime
+  // Prefill datetime
   (function prefillDate(){
     const d = new Date(), p = n => String(n).padStart(2,'0');
     const val = `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -166,7 +164,7 @@
   const form      = document.getElementById('osdForm');
   const submitBtn = document.getElementById('submitBtn');
 
-  // ---- Signature pad (pointer events) ----
+  // Signature pad
   const canvas = document.getElementById('sigCanvas');
   const ctx    = canvas.getContext('2d');
   let drawing=false, lastX=0, lastY=0;
@@ -191,7 +189,7 @@
   canvas.addEventListener('pointercancel', endStroke);
   document.getElementById('clearSig').addEventListener('click', ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); window.signatureDataUrl=""; });
 
-  // ---- Photo previews + light compression ----
+  // Photos preview
   const photosInput = document.getElementById('photos');
   const thumbs      = document.getElementById('thumbs');
   photosInput.addEventListener('change', ()=>{
@@ -213,14 +211,14 @@
     });
   }
 
-  // ---- Submit ----
+  // Submit
   form.addEventListener('submit', async (e)=>{
     e.preventDefault(); alertBox.innerHTML='';
 
-    const location   = document.getElementById('location').value.trim();
+    const doorNumber = document.getElementById('doorNumber').value.trim();
     const driverName = document.getElementById('driverName').value.trim();
-    if(!location || !driverName){
-      alertBox.innerHTML = `<div class="alert error">Location and Driver Name are required.</div>`;
+    if(!doorNumber || !driverName){
+      alertBox.innerHTML = `<div class="alert error">Door Number and Driver Name are required.</div>`;
       return;
     }
 
@@ -230,11 +228,10 @@
 
     const payload = {
       timestamp: document.getElementById('date').value || new Date().toISOString(),
-      location,
+      doorNumber,
       loadId: document.getElementById('bol').value || '',
       poNumber: document.getElementById('po').value || '',
       trailerNumber: document.getElementById('trailer').value || '',
-      stopNumber: '', // keep key for backend compatibility (Stop # removed)
       carrier: document.getElementById('carrier').value || '',
       vendorId: document.getElementById('vendorId').value || '',
       vendorName: document.getElementById('vendorName').value || '',
@@ -245,7 +242,6 @@
       photos,
       device: navigator.userAgent,
       submittedAt: new Date().toISOString(),
-      // email controls
       toEmail:  document.getElementById('toEmail').value || '',
       ccEmail:  document.getElementById('ccEmail').value || '',
       bccEmail: document.getElementById('bccEmail').value || '',
