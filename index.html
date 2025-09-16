@@ -17,7 +17,9 @@
   input:focus,textarea:focus,select:focus{border-color:var(--brand)}
   .grid{display:grid;gap:12px}
   @media(min-width:820px){.grid-2{grid-template-columns:1fr 1fr}}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+  .field{flex:1 1 220px;min-width:160px}
+  .field.small{flex:0 0 180px;min-width:150px}
   .btn{background:var(--brand);color:#fff;border:none;border-radius:12px;padding:10px 16px;font-weight:600;cursor:pointer}
   .btn:disabled{opacity:.6;cursor:not-allowed}
   .btn-ghost{background:#eef2ff;color:#111827;border:none;border-radius:10px;padding:8px 12px}
@@ -53,25 +55,53 @@
           <option value="Dock 19 – 6121 Bixby Rd, Canal Winchester OH 43110">Dock 19 – 6121 Bixby Rd, Canal Winchester OH 43110</option>
         </select>
       </div>
-      <div><label>Load ID / BOL #</label><input id="bol"/></div>
-      <div><label>PO Number</label><input id="po"/></div>
-      <div><label>Trailer #</label><input id="trailer"/></div>
-      <div><label>Stop #</label><input id="stop"/></div>
-      <div><label>Carrier</label><input id="carrier"/></div>
-      <div><label>Vendor ID</label><input id="vendorId"/></div>
-      <div><label>Vendor Name</label><input id="vendorName"/></div>
     </div>
 
-    <label>Notes / Exceptions</label>
-    <textarea id="notes" rows="5" placeholder="Possible damages, shortages, and overages..."></textarea>
+    <!-- Compact row: BOL # + PO # -->
+    <div class="row card" style="margin-top:12px">
+      <div class="field small">
+        <label for="bol">BOL #</label>
+        <input id="bol" placeholder="BOL #"/>
+      </div>
+      <div class="field small">
+        <label for="po">PO #</label>
+        <input id="po" placeholder="PO #"/>
+      </div>
+      <div class="field">
+        <label for="trailer">Trailer #</label>
+        <input id="trailer" placeholder="Trailer #"/>
+      </div>
+      <div class="field">
+        <label for="carrier">Carrier</label>
+        <input id="carrier" placeholder="Carrier"/>
+      </div>
+      <!-- Stop # removed per request -->
+    </div>
+
+    <!-- Compact row: Vendor ID + Vendor Name -->
+    <div class="row card" style="margin-top:12px">
+      <div class="field small">
+        <label for="vendorId">Vendor ID</label>
+        <input id="vendorId" placeholder="Vendor ID"/>
+      </div>
+      <div class="field">
+        <label for="vendorName">Vendor Name</label>
+        <input id="vendorName" placeholder="Vendor Name"/>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Notes / Exceptions</label>
+      <textarea id="notes" rows="5" placeholder="Possible damages, shortages, and overages..."></textarea>
+    </div>
 
     <div class="row">
-      <div style="flex:1">
-        <label>Driver Name *</label>
+      <div class="field">
+        <label for="driverName">Driver Name *</label>
         <input id="driverName" required/>
       </div>
-      <div style="flex:1">
-        <label>PRO #</label>
+      <div class="field">
+        <label for="proNumber">PRO #</label>
         <input id="proNumber"/>
       </div>
     </div>
@@ -189,7 +219,10 @@
 
     const location   = document.getElementById('location').value.trim();
     const driverName = document.getElementById('driverName').value.trim();
-    if(!location || !driverName){ alertBox.innerHTML = `<div class="alert error">Location and Driver Name are required.</div>`; return; }
+    if(!location || !driverName){
+      alertBox.innerHTML = `<div class="alert error">Location and Driver Name are required.</div>`;
+      return;
+    }
 
     const files  = photosInput ? [...photosInput.files] : [];
     const photos = [];
@@ -201,7 +234,7 @@
       loadId: document.getElementById('bol').value || '',
       poNumber: document.getElementById('po').value || '',
       trailerNumber: document.getElementById('trailer').value || '',
-      stopNumber: document.getElementById('stop').value || '',
+      stopNumber: '', // keep key for backend compatibility (Stop # removed)
       carrier: document.getElementById('carrier').value || '',
       vendorId: document.getElementById('vendorId').value || '',
       vendorName: document.getElementById('vendorName').value || '',
@@ -222,16 +255,22 @@
 
     submitBtn.disabled = true;
     try{
-      const resp = await fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const resp = await fetch(BACKEND_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
       const out = await resp.json().catch(()=> ({}));
       if(!resp.ok || out.ok === false) throw new Error(out.error || 'Submit failed');
       alertBox.innerHTML = `<div class="alert success">✅ Submitted! PDF emailed${out.id ? ' · Ref: ' + out.id : ''}.</div>`;
       form.reset(); ctx.clearRect(0,0,canvas.width,canvas.height); window.signatureDataUrl=''; thumbs.innerHTML='';
     }catch(err){
-      console.error(err); alertBox.innerHTML = `<div class="alert error">❌ ${err.message}</div>`;
-    }finally{ submitBtn.disabled = false; }
+      console.error(err);
+      alertBox.innerHTML = `<div class="alert error">❌ ${err.message}</div>`;
+    }finally{
+      submitBtn.disabled = false;
+    }
   });
 </script>
 </body>
 </html>
-
